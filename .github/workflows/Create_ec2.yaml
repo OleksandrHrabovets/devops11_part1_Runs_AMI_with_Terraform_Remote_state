@@ -1,0 +1,49 @@
+name: Run new AMI with Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      ec2-name:
+        description: Run new AMI with Terraform
+        required: true
+        default: "Run new AMI with Terraform"
+        type: string
+jobs:
+  provision-ec2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: "${{ secrets.TF_AWS_ACCESS_KEY_ID }}"
+          aws-secret-access-key: "${{ secrets.TF_AWS_SECRET_ACCESS_KEY }}"
+          aws-region: eu-central-1
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Terraform Apply
+        id: apply
+        run: |
+          terraform init
+          terraform validate
+          terraform plan 
+          terraform apply -auto-approve
+      - name: Collect status
+        id: collect_status
+        run: |
+          echo "TERRAFORM_STATUS=$([[ '${{ steps.apply.outcome }}' == 'success' ]] && echo '✅ Success' || echo '❌ Failed')" >> $GITHUB_ENV
+      - name: Send Telegram Notification
+        if: always()
+        uses: cbrgm/telegram-github-action@v1
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            *GitHab Actions CI Results*:
+            *Step name*: Terraform Apply
+            *Status*: ${{ env.TERRAFORM_STATUS }}
