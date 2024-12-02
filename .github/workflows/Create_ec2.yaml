@@ -9,7 +9,7 @@ on:
         default: "Run new AMI with Terraform"
         type: string
 jobs:
-  provision-ec2:
+  create-ec2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -9,7 +9,7 @@ on:
         default: "Destroy EC2 with Terraform"
         type: string
 jobs:
-  provision-ec2:
+  destroy-ec2:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
